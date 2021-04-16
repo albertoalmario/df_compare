@@ -6,9 +6,12 @@ Created on Wed Apr 14 08:23:19 2021
 @email: albertoalmario@gmail.com
 """
 
+import sys
+import time
+import pandas as pd
 from pandas.core.frame import DataFrame
 from tqdm import tqdm
-import pandas as pd
+
 
 
 class DF_Compare():
@@ -29,7 +32,8 @@ class DF_Compare():
         self.__df_validations()
         if self.print_logs:
             print('Initial Shape(rows, columns): L->', self.df_left.shape, '| R->', self.df_right.shape)
-        self.__remove_exclude_columns()        
+        self.__remove_exclude_columns()
+        self.__set_same_data_types()        
         
     def refresh_column_list(self):
         self.left_columns = sorted(list(self.df_left.columns))
@@ -89,16 +93,13 @@ class DF_Compare():
         remove columns from the DataFrame
         """
         if len(self.columns_to_exclude) >= 1:
-            self.df_left.drop(self.columns_to_exclude, axis=1, inplace=True)
-            self.df_right.drop(self.columns_to_exclude, axis=1, inplace=True)
+            self.df_left = self.df_left.drop(self.columns_to_exclude, axis=1)
+            self.df_right = self.df_right.drop(self.columns_to_exclude, axis=1)
             self.refresh_column_list()
             if self.print_logs:
                 print('Shape(rows, columns) after delete columns to exclude: L->', self.df_left.shape, '| R->' ,self.df_right.shape)
-        else:
-            if self.print_logs:
-                print('Not provided columns to exclude')
     
-    def set_same_data_types(self):
+    def __set_same_data_types(self):
         """
         Set the same data types for the two DataFrames
         """
@@ -214,14 +215,18 @@ class DF_Compare():
             
             # Delete coincident rows on two DataFrames and get left_only and right_only
             # this to compare only the not matched by whole row and do the process lighter 
+            print_logs_orig_value = self.print_logs
+            self.print_logs = False
             df_whole_row_comp = self.get_differences_by_compare_whole_row()
+            self.print_logs = print_logs_orig_value
+            
             if df_whole_row_comp is None:
                 return df_whole_row_comp
             
             df_only_left = df_whole_row_comp[df_whole_row_comp['_merge']=='left_only']
-            df_only_left.drop(['_merge'], axis=1, inplace=True)
+            df_only_left = df_only_left.drop('_merge', axis=1)
             df_only_right = df_whole_row_comp[df_whole_row_comp['_merge']=='right_only']
-            df_only_right.drop(['_merge'], axis=1, inplace=True)
+            df_only_right = df_only_right.drop('_merge', axis=1)
             
             # Outer join by join columns
             outer_join = df_only_left.merge(df_only_right
@@ -240,9 +245,10 @@ class DF_Compare():
             df_differences = pd.DataFrame(columns=columns) # Create empty DataFrame
             
             # Create new progress bar
-            pbar = tqdm(desc='finding differences', total=len(outer_join), position=0, leave=True)
+            pbar = tqdm(desc='finding differences', total=len(outer_join), position=0, leave=True, file=sys.stdout)
             # Compare field by field of matched rows by Code
             try:
+                idx = 0
                 for idx, row in outer_join.iterrows():
                     pbar.update(1)
                     tmp_row = []
@@ -261,12 +267,14 @@ class DF_Compare():
                             tmp_row.append(str(row[col_left]) + ' != ' +  str(row[col_right]))
                         else:
                             tmp_row.append('')
-                    df_differences.loc[len(df_differences)] = tmp_row # Append temporal row to the response DataFrame
+                    df_differences.loc[idx] = tmp_row # Append temporal row to the response DataFrame
+                    idx += 1
             except Exception as e:
                 raise Exception(e)
             finally:
                 # Close progress bar
                 pbar.close()
+                # pass
                 
             if len(df_differences) >= 1:
                 if self.print_logs:

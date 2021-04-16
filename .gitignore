@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# files
+use_example_long_file.ipynb
+pruebas.py
