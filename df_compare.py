@@ -7,7 +7,6 @@ Created on Wed Apr 14 08:23:19 2021
 """
 
 import sys
-import time
 import pandas as pd
 from pandas.core.frame import DataFrame
 from tqdm import tqdm
@@ -220,7 +219,10 @@ class DF_Compare():
             df_whole_row_comp = self.get_differences_by_compare_whole_row()
             self.print_logs = print_logs_orig_value
             
+            # If the compare by whole row not generate differences finished the process
             if df_whole_row_comp is None:
+                if self.print_logs:
+                    print('The two DataFrames Not have differences')
                 return df_whole_row_comp
             
             df_only_left = df_whole_row_comp[df_whole_row_comp['_merge']=='left_only']
@@ -291,7 +293,6 @@ def df_extract_head_and_tail(data_frame, num_rows=100):
     df_head_tail = data_frame.head(num_rows)
     df_head_tail = df_head_tail.append(data_frame.tail(num_rows))
     return df_head_tail
-
 
 
 if __name__ == '__main__':
