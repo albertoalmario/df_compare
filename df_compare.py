@@ -17,22 +17,32 @@ class DF_Compare():
     """
     Compare two DataFrames, it is necesary that the two DataFrames have de same columns names and quantity,
     not is necesary that have the same order columns
+    parameter:
+        df_left: Left DataFrame
+        df_right: Right DataFrame
+        columns_to_exclude: list of columns name to exclude of the compare process
+        columns_to_join: list of columns names that will be use to do join between the two DataFrames
+        print_logs: indicate if the process print logs on console, by default is True
+        lr_strip: Remove spaces at the beginning and at the end of the string, by default is False
     """
     # agregar case sensitive true o false compare por defecto siempre es case sensitive
 
-    def __init__(self, df_left, df_right, columns_to_exclude=[], columns_to_join=[], print_logs=True):
+    def __init__(self, df_left, df_right, columns_to_exclude=[], columns_to_join=[], print_logs=True, lr_strip=False):
         self.df_left = df_left
         self.df_right = df_right
         self.columns_to_exclude = columns_to_exclude
         self.columns_to_join = columns_to_join
         self.print_logs = print_logs
+        self.lr_strip = lr_strip
         self.left_columns = []
         self.right_columns = []
         self.__df_validations()
         if self.print_logs:
             print('Initial Shape(rows, columns): L->', self.df_left.shape, '| R->', self.df_right.shape)
         self.__remove_exclude_columns()
-        self.__set_same_data_types()        
+        self.__set_same_data_types()
+        if self.lr_strip:
+            self.__remove_whitespace()
         
     def refresh_column_list(self):
         self.left_columns = sorted(list(self.df_left.columns))
@@ -110,6 +120,25 @@ class DF_Compare():
                 self.df_left[idx] = self.df_left[idx].astype('object')
             if row[1] != 'object':
                 self.df_right[idx] = self.df_right[idx].astype('object') 
+    
+    def __remove_whitespace(self):
+        """
+        Remove extra leading and tailing whitespace from the DataFrames
+        """
+        # iterating over the columns from left DataFrame
+        for i in self.df_left.columns:
+            # checking datatype of each columns
+            if self.df_left[i].dtype == 'object':
+                # applying strip function on column
+                self.df_left[i] = self.df_left[i].map(str.strip)
+        
+        # iterating over the columns from right DataFrame
+        for i in self.df_right.columns:
+            # checking datatype of each columns
+            if self.df_right[i].dtype == 'object':
+                # applying strip function on column
+                self.df_right[i] = self.df_right[i].map(str.strip)
+                
     
     def find_duplicate_rows_by_whole_row(self):
         """
@@ -201,10 +230,10 @@ class DF_Compare():
     
     def get_differences_by_deep_compare_join_columns(self):
         """
-        Compare the two DataFrames by join columns and check field by field the other column. 
+        Compare the two DataFrames by join columns, and check cell by cell. 
         Return DataFrame with differences.
-        This method could be delayed it there are many rows to compare
-        if the return is None, that mean two DataFrame match by Join Columns and compare field by field
+        This method could be delayed if there are many rows to compare
+        if the return is None, that mean two DataFrame match by Join Columns and compare cell by cell
         """
         df_differences = None
         if len(self.columns_to_join) >= 1:
@@ -265,8 +294,10 @@ class DF_Compare():
                             continue
                         col_left = col + suffix_left
                         col_right = col + suffix_right
-                        if str(row[col_left]) != str(row[col_right]): # Compare the field Left Vs the field Right
-                            tmp_row.append(str(row[col_left]) + ' != ' +  str(row[col_right]))
+                        row_col_left = str(row[col_left])
+                        row_col_right = str(row[col_right])
+                        if row_col_left != row_col_right: # Compare the field Left Vs the field Right
+                            tmp_row.append(row_col_left + ' != ' +  row_col_right)
                         else:
                             tmp_row.append('')
                     df_differences.loc[idx] = tmp_row # Append temporal row to the response DataFrame
@@ -293,6 +324,7 @@ def df_extract_head_and_tail(data_frame, num_rows=100):
     df_head_tail = data_frame.head(num_rows)
     df_head_tail = df_head_tail.append(data_frame.tail(num_rows))
     return df_head_tail
+
 
 
 if __name__ == '__main__':
