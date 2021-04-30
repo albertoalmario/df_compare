@@ -130,14 +130,14 @@ class DF_Compare():
             # checking datatype of each columns
             if self.df_left[i].dtype == 'object':
                 # applying strip function on column
-                self.df_left[i] = self.df_left[i].str.strip()
+                self.df_left[i] = self.df_left[i].astype(str).str.strip()
         
         # iterating over the columns from right DataFrame
         for i in self.df_right.columns:
             # checking datatype of each columns
             if self.df_right[i].dtype == 'object':
                 # applying strip function on column
-                self.df_right[i] = self.df_right[i].str.strip()
+                self.df_right[i] = self.df_right[i].astype(str).str.strip()
                 
     
     def find_duplicate_rows_by_whole_row(self):
