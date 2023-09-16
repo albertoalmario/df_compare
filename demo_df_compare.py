@@ -13,3 +13,6 @@ compare_df = comdf.get_differences_by_deep_compare_join_columns()
 # print(compare_df)
 # compare_df = comdf.get_differences_by_compare_whole_row()
 # htdf = df_extract_head_and_tail(compare_df)
+
+# file_name = "test.xlsx"
+# compare_df.to_excel(file_name, index=False, engine='openpyxl')

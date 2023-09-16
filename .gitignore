@@ -131,3 +131,6 @@ dmypy.json
 # files
 use_example_long_file.ipynb
 pruebas.py
+lvl60.py
+recommended_prices_report_UAT_Vs_PROD.csv
+test.csv
